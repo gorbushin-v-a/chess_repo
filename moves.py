@@ -37,19 +37,7 @@ def is_same_color(field, coords1, coords2):
     return (field[get_idx_from_coords(coords1)] >> 3) & 1 == (field[get_idx_from_coords(coords2)] >> 3) & 1
 
 
-def get_knight_moves(field, coords):
-    moves = []
-    x, y = coords
-    for i in range(-2, 3):
-        for j in range(-2, 3):
-            # print(x + i, y + j)
-            if abs(i) + abs(j) == 3 and 0 <= x + i < 8 and 0 <= y + j < 8:
-                if not is_same_color(field, (x + i, y + j), coords) or is_free(field, (x + i, y + j)):
-                    moves.append((x + i, y + j))
-    return moves
-
-
-def get_bishop_moves(field, coords):
+def _get_diagonal(field, coords):
     moves = []
     x, y = coords
     for i in (-1, 1):
@@ -63,6 +51,56 @@ def get_bishop_moves(field, coords):
                         break
                     else:
                         break
+    return moves
+
+
+def _get_orthogonal(field, coords):
+    moves = []
+    x, y = coords
+    for i, j in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+        for k in range(1, 8):
+            if 0 <= x + i * k < 8 and 0 <= y + j * k < 8:
+                if is_free(field, (x + i * k, y + j * k)):
+                    moves.append((x + i * k, y + j * k))
+                elif not is_same_color(field, coords, (x + i * k, y + j * k)):
+                    moves.append((x + i * k, y + j * k))
+                    break
+                else:
+                    break
+    return moves
+
+
+def get_knight_moves(field, coords):
+    moves = []
+    x, y = coords
+    for dx in range(-2, 3):
+        for dy in range(-2, 3):
+            if abs(dx) + abs(dy) == 3 and 0 <= x + dx < 8 and 0 <= y + dy < 8:
+                if not is_same_color(field, (x + dx, y + dy), coords) or is_free(field, (x + dx, y + dy)):
+                    moves.append((x + dx, y + dy))
+    return moves
+
+
+def get_bishop_moves(field, coords):
+    return _get_diagonal(field, coords)
+
+
+def get_rook_moves(field, coords):
+    return _get_orthogonal(field, coords)
+
+
+def get_queen_moves(field, coords):
+    return _get_diagonal(field, coords) + _get_orthogonal(field, coords)
+
+
+def get_king_moves(field, coords):
+    moves = []
+    x, y = coords
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            if 0 <= x + dx < 8 and 0 <= y + dy < 8:
+                if is_free(field, (x + dx, y + dy)) or not is_same_color(field, coords, (x + dx, y + dy)):
+                    moves.append((x + dx, y + dy))
     return moves
 
 
@@ -87,7 +125,7 @@ def get_pawn_moves(field, coords):
 
 
 if __name__ == "__main__":
-    board_fen = "rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR"
+    board_fen = "rnbqkbnr/pppppppp/8/1KP5/8/P7/1PPPPPPP/RNBQKBNR"
     squares = [None] * 64
 
     index = 0
@@ -105,4 +143,4 @@ if __name__ == "__main__":
             raise Exception("Unknown character in FEN: {}".format(char))
 
     print(squares)
-    print(get_pawn_moves(squares, (0, 6)))
+    print(get_king_moves(squares, (1, 4)))
